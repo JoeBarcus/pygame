@@ -3,6 +3,8 @@ from pygame.locals import *
 from pygame import mixer
 import pickle
 from os import path
+from environment import Lava, Coin, Exit, Platform, Enemy, Button
+
 
 pygame.mixer.pre_init(44100, -16, 2, 512)
 mixer.init()
@@ -62,32 +64,6 @@ def reset_level(level):
         world_data = pickle.load(pickle_in)
     world = World(world_data)
     return world
-
-class Button():
-    def __init__(self, x, y, image):
-        self.image = image
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-        self.clicked = False
-
-    def draw(self):
-        action = False
-        #mouse position
-        pos = pygame.mouse.get_pos()
-
-        if self.rect.collidepoint(pos):
-            if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
-                action = True
-                self.clicked = True
-        
-        if pygame.mouse.get_pressed()[0] == 0:
-            self.clicked = False
-
-        screen.blit(self.image, self.rect)
-
-        return action
-
 
 class Player():
     def __init__(self, x, y):
@@ -262,19 +238,19 @@ class World():
                     blob = Enemy(col_count * TILE_SIZE, row_count * TILE_SIZE + 15)
                     blob_group.add(blob)
                 if tile == 4:
-                    platform = Platform(col_count * TILE_SIZE, row_count * TILE_SIZE, 1, 0)
+                    platform = Platform(col_count * TILE_SIZE, row_count * TILE_SIZE, TILE_SIZE, 1, 0)
                     platform_group.add(platform)
                 if tile == 5:
-                    platform = Platform(col_count * TILE_SIZE, row_count * TILE_SIZE, 0, 1)
+                    platform = Platform(col_count * TILE_SIZE, row_count * TILE_SIZE, TILE_SIZE, 0, 1)
                     platform_group.add(platform)
                 if tile == 6:
-                    lava = Lava(col_count * TILE_SIZE, row_count * TILE_SIZE + TILE_SIZE // 2)
+                    lava = Lava(col_count * TILE_SIZE, row_count * TILE_SIZE + TILE_SIZE // 2, TILE_SIZE)
                     lava_group.add(lava)
                 if tile == 7:
-                    coin = Coin(col_count * TILE_SIZE + (TILE_SIZE // 2) - 15, row_count * TILE_SIZE + (TILE_SIZE // 2))
+                    coin = Coin(col_count * TILE_SIZE + (TILE_SIZE // 2) - 15, row_count * TILE_SIZE + (TILE_SIZE // 2), TILE_SIZE)
                     coin_group.add(coin)                    
                 if tile == 8:
-                    exit = Exit(col_count * TILE_SIZE + 25, row_count * TILE_SIZE - (TILE_SIZE // 2) + 35)
+                    exit = Exit(col_count * TILE_SIZE + 25, row_count * TILE_SIZE - (TILE_SIZE // 2) + 35, TILE_SIZE)
                     exit_group.add(exit)
                 col_count += 1
             row_count += 1
@@ -284,73 +260,8 @@ class World():
             screen.blit(tile[0], tile[1])
             #pygame.draw.rect(screen, (255,255,255), tile[1], 2)
 
-class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load('assets/blob.png')
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-        self.move_direction = 1
-        self.move_counter = 0
-
-    def update(self):
-        self.rect.x += self.move_direction
-        self.move_counter += 1
-        if abs(self.move_counter) > 50:
-            self.move_direction *= -1
-            self.move_counter *= -1
-
-class Platform(pygame.sprite.Sprite):
-    def __init__(self, x, y, move_x, move_y):
-        pygame.sprite.Sprite.__init__(self)
-        img = pygame.image.load('assets/platform.png')
-        self.image = pygame.transform.scale(img, (TILE_SIZE, TILE_SIZE // 2))
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-        self.move_direction = 1
-        self.move_counter = 0
-        self.move_x = move_x
-        self.move_y = move_y
-
-    def update(self):
-        self.rect.x += self.move_direction * self.move_x
-        self.rect.y += self.move_direction * self.move_y
-        self.move_counter += 1
-        if abs(self.move_counter) > 50:
-            self.move_direction *= -1
-            self.move_counter *= -1
-
-
-class Lava(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        pygame.sprite.Sprite.__init__(self)
-        img = pygame.image.load('assets/lava.png')
-        self.image = pygame.transform.scale(img, (TILE_SIZE, TILE_SIZE // 2))
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-
-class Coin(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        pygame.sprite.Sprite.__init__(self)
-        img = pygame.image.load('assets/coin.png')
-        self.image = pygame.transform.scale(img, (TILE_SIZE // 2, TILE_SIZE // 2))
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-
-class Exit(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        pygame.sprite.Sprite.__init__(self)
-        img = pygame.image.load('assets/exit.png')
-        self.image = pygame.transform.scale(img, (TILE_SIZE, int(TILE_SIZE * 1.5)))
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
-
-
 player = Player(100, HEIGHT - 130)
+
 
 blob_group = pygame.sprite.Group()
 platform_group = pygame.sprite.Group()
@@ -358,7 +269,7 @@ lava_group = pygame.sprite.Group()
 coin_group = pygame.sprite.Group()
 exit_group = pygame.sprite.Group()
 
-score_coin = Coin(TILE_SIZE // 2, TILE_SIZE // 3)
+score_coin = Coin(TILE_SIZE // 2, TILE_SIZE // 3, TILE_SIZE)
 coin_group.add(score_coin)
 
 if path.exists(f'data/level{LEVEL}_data'):
@@ -366,9 +277,11 @@ if path.exists(f'data/level{LEVEL}_data'):
     world_data = pickle.load(pickle_in)
 world = World(world_data)
 
-restart_button = Button(WIDTH // 2 - 50, HEIGHT // 2 + 100, restart_img)
-start_button = Button(WIDTH // 2 - 350, HEIGHT // 2 , start_img)
-exit_button = Button(WIDTH // 2 + 150, HEIGHT // 2, exit_img)
+
+
+restart_button = Button(WIDTH // 2 - 50, HEIGHT // 2 + 100, restart_img, screen)
+start_button = Button(WIDTH // 2 - 350, HEIGHT // 2 , start_img, screen)
+exit_button = Button(WIDTH // 2 + 150, HEIGHT // 2, exit_img, screen)
 
 run = True
 
@@ -422,7 +335,7 @@ while run:
             else:
                 draw_text('YOU WIN!', font, BLUE, (WIDTH // 2) - 140, HEIGHT // 2)
                 if restart_button.draw():
-                    level = 0
+                    LEVEL = 0
                     world_data = []
                     world = reset_level(LEVEL)
                     GAME_OVER = 0
